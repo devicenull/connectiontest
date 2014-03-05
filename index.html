@@ -1,1 +1,73 @@
-Hello World
+<html>
+<head>
+<style>
+.error
+{
+	color: red;
+}
+</style>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script>
+var startDate;
+var endDate;
+var checkInterval;
+var errorCount = 0;
+function startClock()
+{
+	startDate = new Date();
+	checkInterval = setInterval("checkConnection()",10*1000);
+	$('#log').append("Testing started at "+startDate+'<br>');
+	$('#status').html('Testing started...');
+	$('#startbutton').hide();
+}
+
+function checkConnection()
+{
+	$.ajax({
+		url: 'testresult.html',
+		cache: false,
+		success: function(data, textStatus, jqXHR) {
+			var curDate = new Date();
+			errorCount = 0;
+			$('#status').html('Running for '+millisecondsToTime(curDate.getTime() - startDate.getTime()));
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			$('#log').append('<span class="error">Error occured at '+new Date()+': '+errorThrown+'</span><br>');
+			errorCount++;
+			if (errorCount > 2)
+			{
+				clearInterval(checkInterval);
+				checkInterval = null;
+
+				endDate = new Date();
+				$('#status').html('Testing stopped at '+endDate+' after 3 failures');
+				$('#log').append('Connection was up for '+millisecondsToTime(endDate.getTime()-startDate.getTime())+'<br>');
+			}
+		},
+	});
+}
+
+function millisecondsToTime(time)
+{
+	time /= 1000;
+	var hrs = ~~(time / 3600);
+	var mins = ~~((time % 3600) / 60);
+	var secs = Math.round(time % 60);
+
+	if (hrs > 0)
+	{
+		return ""+hrs+" hrs "+mins+" mins "+secs+ " seconds";
+	}
+	return mins+" mins "+secs+" seconds";
+}
+</script>
+</head>
+
+<body>
+Press Start Clock to start testing your internet connection every 10 seconds.  Testing will stop after 3 consecutive failures.
+<button onclick="startClock()" id="startbutton">Start Clock</button>
+<div id="log">
+</div>
+<div id="status"></div>
+</body>
+</html>
